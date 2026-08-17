@@ -6,8 +6,8 @@ const statsController = require("../controllers/stats.controller");
 
 const router = express.Router();
 
-const excludeRejectedByDefault = (req, res, next) => {
-  req.query.excludeRejected = "true";
+const publicReportsOnly = (req, res, next) => {
+  req.query.publicOnly = "true";
   next();
 };
 
@@ -17,7 +17,7 @@ const publishedOnly = (req, res, next) => {
 };
 
 // ---------- Reports (public browse/search) ----------
-router.get("/reports", excludeRejectedByDefault, reportController.getReports);
+router.get("/reports", publicReportsOnly, reportController.getReports);
 router.get("/reports/:id", reportController.getReportById);
 
 // ---------- Maintenance notices ----------

@@ -15,7 +15,9 @@ const buildReportFilter = (query = {}) => {
   if (query.district) filter.district = query.district;
   if (query.municipality) filter.municipality = query.municipality;
   if (query.province) filter.province = query.province;
-  if (query.excludeRejected === "true") {
+  if (query.publicOnly === "true") {
+    filter.status = { $in: ["Verified", "Resolved"] };
+  } else if (query.excludeRejected === "true") {
     filter.status = { $ne: "Rejected" };
   } else if (query.status) {
     filter.status = query.status;

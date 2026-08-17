@@ -4,7 +4,7 @@ const refreshCookieOptions = {
   httpOnly: true,
   secure: process.env.NODE_ENV === "production",
   sameSite: "strict",
-  maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+  maxAge: 7 * 24 * 60 * 60 * 1000,
 };
 
 const register = async (req, res, next) => {
@@ -67,7 +67,14 @@ const login = async (req, res, next) => {
 
 const refresh = async (req, res, next) => {
   try {
-    const incomingRefreshToken = req.cookies?.refreshToken || req.body.refreshToken;
+    const incomingRefreshToken = req.cookies?.refreshToken || req.body?.refreshToken;
+
+    if (!incomingRefreshToken) {
+      return res.status(401).json({
+        success: false,
+        message: "Refresh token is required",
+      });
+    }
 
     const { accessToken, refreshToken } = await authService.refreshAccessToken(
       incomingRefreshToken
