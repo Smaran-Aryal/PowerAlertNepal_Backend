@@ -12,6 +12,7 @@ const router = express.Router();
 
 router.post("/register", validate(registerValidationRules), authController.register);
 router.post("/login", validate(loginValidationRules), authController.login);
+router.post("/google", authController.googleLogin);
 router.post("/refresh", validate(refreshTokenValidationRules), authController.refresh);
 
 

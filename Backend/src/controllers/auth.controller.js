@@ -35,6 +35,32 @@ const register = async (req, res, next) => {
   }
 };
 
+const googleLogin = async (req, res, next) => {
+  try {
+    const { idToken } = req.body;
+
+    const { user, accessToken, refreshToken } = await authService.googleLogin(idToken);
+
+    res.cookie("refreshToken", refreshToken, refreshCookieOptions);
+
+    return res.status(200).json({
+      success: true,
+      message: "Google login successful",
+      data: {
+        accessToken,
+        user: {
+          id: user._id,
+          fullName: user.fullName,
+          email: user.email,
+          role: user.role,
+        },
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 const login = async (req, res, next) => {
   try {
     const { email, password } = req.body;
@@ -124,4 +150,5 @@ module.exports = {
   refresh,
   logout,
   getProfile,
+  googleLogin,
 };
