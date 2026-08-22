@@ -53,10 +53,20 @@ const userSchema = new mongoose.Schema(
       default: "citizen",
     },
 
+    isEmailVerified: {
+      type: Boolean,
+      default: false,
+    },
+
     isActive: {
       type: Boolean,
       default: true,
     },
+    emailOtpHash: { type: String, select: false },
+    emailOtpExpires: { type: Date, select: false },
+
+    resetOtpHash: { type: String, select: false },
+    resetOtpExpires: { type: Date, select: false },
   },
   {
     timestamps: true,

@@ -90,6 +90,77 @@ const login = async (req, res, next) => {
   }
 };
 
+const verifyEmail = async (req, res, next) => {
+  try {
+    const { email, otp } = req.body;
+    await authService.verifyEmail({ email, otp });
+
+    return res.status(200).json({
+      success: true,
+      message: "Email verified successfully. You can now log in.",
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+const resendVerificationOtp = async (req, res, next) => {
+  try {
+    const { email } = req.body;
+    await authService.resendVerificationOtp({ email });
+
+    return res.status(200).json({
+      success: true,
+      message: "If an unverified account exists with this email, a new code has been sent.",
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+const forgotPassword = async (req, res, next) => {
+  try {
+    const { email } = req.body;
+    await authService.forgotPassword({ email });
+
+    return res.status(200).json({
+      success: true,
+      message: "If an account exists with this email, a reset code has been sent.",
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+const verifyResetOtp = async (req, res, next) => {
+  try {
+    const { email, otp } = req.body;
+    const { resetToken } = await authService.verifyResetOtp({ email, otp });
+
+    return res.status(200).json({
+      success: true,
+      message: "Code verified",
+      data: { resetToken },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+const resetPassword = async (req, res, next) => {
+  try {
+    const { resetToken, newPassword } = req.body;
+    await authService.resetPassword({ resetToken, newPassword });
+
+    return res.status(200).json({
+      success: true,
+      message: "Password reset successfully. You can now log in.",
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 
 const refresh = async (req, res, next) => {
   try {
@@ -151,4 +222,9 @@ module.exports = {
   logout,
   getProfile,
   googleLogin,
+  verifyEmail,
+  resendVerificationOtp,
+  forgotPassword,
+  verifyResetOtp,
+  resetPassword,
 };
