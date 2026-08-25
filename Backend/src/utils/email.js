@@ -1,6 +1,12 @@
-const { Resend } = require("resend");
+const nodemailer = require("nodemailer");
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+const transporter = nodemailer.createTransport({
+  service: "gmail",
+  auth: {
+    user: process.env.GMAIL_USER,
+    pass: process.env.GMAIL_APP_PASSWORD,
+  },
+});
 
 async function sendOtpEmail({ to, otp, purpose }) {
   const subject =
@@ -13,8 +19,8 @@ async function sendOtpEmail({ to, otp, purpose }) {
       ? "Confirm your email address"
       : "Reset your password";
 
-  await resend.emails.send({
-    from: process.env.EMAIL_FROM,
+  await transporter.sendMail({
+    from: `"PowerAlert Nepal" <${process.env.GMAIL_USER}>`,
     to,
     subject,
     html: `
