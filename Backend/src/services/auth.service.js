@@ -10,11 +10,24 @@ const OTP_EXPIRY_MS = 10 * 60 * 1000;
 const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 const registerUser = async ({ fullName, email, password, phone }) => {
-  const existingUser = await User.findOne({ email });
+  const existingUser = await User.findOne({ email }).select("+password");
+
   if (existingUser) {
-    const error = new Error("Email is already registered");
-    error.statusCode = 409;
-    throw error;
+    if (existingUser.isEmailVerified) {
+      const error = new Error("Email is already registered");
+      error.statusCode = 409;
+      throw error;
+    }
+
+    const otp = generateOtp();
+    existingUser.emailOtpHash = hashOtp(otp);
+    existingUser.emailOtpExpires = new Date(Date.now() + OTP_EXPIRY_MS);
+    existingUser.emailOtpAttempts = 0;
+    await existingUser.save();
+
+    await sendOtpEmail({ to: email, otp, purpose: "verify-email" });
+
+    return existingUser;
   }
 
   const otp = generateOtp();
@@ -35,8 +48,12 @@ const registerUser = async ({ fullName, email, password, phone }) => {
   return user;
 };
 
+const MAX_OTP_ATTEMPTS = 5;
+
 const verifyEmail = async ({ email, otp }) => {
-  const user = await User.findOne({ email }).select("+emailOtpHash +emailOtpExpires");
+  const user = await User.findOne({ email }).select(
+    "+emailOtpHash +emailOtpExpires +emailOtpAttempts"
+  );
 
   if (!user) {
     const error = new Error("Invalid email or code");
@@ -56,7 +73,22 @@ const verifyEmail = async ({ email, otp }) => {
     throw error;
   }
 
+  if (user.emailOtpAttempts >= MAX_OTP_ATTEMPTS) {
+
+    user.emailOtpHash = undefined;
+    user.emailOtpExpires = undefined;
+    user.emailOtpAttempts = 0;
+    await user.save();
+
+    const error = new Error("Too many incorrect attempts. Please request a new code.");
+    error.statusCode = 429;
+    throw error;
+  }
+
   if (hashOtp(otp) !== user.emailOtpHash) {
+    user.emailOtpAttempts += 1;
+    await user.save();
+
     const error = new Error("Invalid email or code");
     error.statusCode = 400;
     throw error;
@@ -65,6 +97,7 @@ const verifyEmail = async ({ email, otp }) => {
   user.isEmailVerified = true;
   user.emailOtpHash = undefined;
   user.emailOtpExpires = undefined;
+  user.emailOtpAttempts = 0;
   await user.save();
 
   return user;
@@ -73,7 +106,6 @@ const verifyEmail = async ({ email, otp }) => {
 const resendVerificationOtp = async ({ email }) => {
   const user = await User.findOne({ email });
 
-  // Generic response regardless — don't reveal account existence
   if (!user || user.isEmailVerified) return;
 
   const otp = generateOtp();
@@ -87,36 +119,71 @@ const resendVerificationOtp = async ({ email }) => {
 const forgotPassword = async ({ email }) => {
   const user = await User.findOne({ email });
 
-  // Generic response regardless — prevents account enumeration
   if (!user) return;
 
   const otp = generateOtp();
   user.resetOtpHash = hashOtp(otp);
   user.resetOtpExpires = new Date(Date.now() + OTP_EXPIRY_MS);
+  user.resetOtpAttempts = 0;
   await user.save();
 
   await sendOtpEmail({ to: email, otp, purpose: "reset-password" });
 };
 
 const verifyResetOtp = async ({ email, otp }) => {
-  const user = await User.findOne({ email }).select("+resetOtpHash +resetOtpExpires");
+  const user = await User.findOne({ email }).select(
+    "+resetOtpHash +resetOtpExpires +resetOtpAttempts"
+  );
 
   if (
     !user ||
     !user.resetOtpHash ||
     !user.resetOtpExpires ||
-    user.resetOtpExpires < new Date() ||
-    hashOtp(otp) !== user.resetOtpHash
+    user.resetOtpExpires < new Date()
   ) {
     const error = new Error("Invalid or expired code");
     error.statusCode = 400;
     throw error;
   }
 
-  // Short-lived reset token (separate secret, 10 min expiry) — proves OTP was verified
-  const resetToken = jwt.sign({ id: user._id, purpose: "password-reset" }, process.env.JWT_RESET_SECRET, {
-    expiresIn: "10m",
-  });
+  if (hashOtp(otp) !== user.resetOtpHash) {
+    user.resetOtpAttempts += 1;
+
+    if (user.resetOtpAttempts >= MAX_OTP_ATTEMPTS) {
+      user.resetOtpHash = undefined;
+      user.resetOtpExpires = undefined;
+      user.resetOtpAttempts = 0;
+      await user.save();
+
+      const error = new Error(
+        "Too many incorrect attempts. Please request a new code."
+      );
+      error.statusCode = 429;
+      throw error;
+    }
+
+    await user.save();
+
+    const error = new Error("Invalid or expired code");
+    error.statusCode = 400;
+    throw error;
+  }
+
+  user.resetOtpHash = undefined;
+  user.resetOtpExpires = undefined;
+  user.resetOtpAttempts = 0;
+  await user.save();
+
+  const resetToken = jwt.sign(
+    {
+      id: user._id,
+      purpose: "password-reset",
+    },
+    process.env.JWT_RESET_SECRET,
+    {
+      expiresIn: "10m",
+    }
+  );
 
   return { resetToken };
 };
