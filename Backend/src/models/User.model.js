@@ -67,6 +67,9 @@ const userSchema = new mongoose.Schema(
 
     resetOtpHash: { type: String, select: false },
     resetOtpExpires: { type: Date, select: false },
+
+    emailOtpAttempts: { type: Number, default: 0, select: false },
+    resetOtpAttempts: { type: Number, default: 0, select: false },
   },
   {
     timestamps: true,
