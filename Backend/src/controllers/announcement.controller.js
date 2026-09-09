@@ -1,5 +1,3 @@
-// src/controllers/announcement.controller.js
-
 const announcementService = require("../services/announcement.service");
 
 const createAnnouncement = async (req, res, next) => {
