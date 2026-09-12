@@ -11,7 +11,7 @@ if (!fs.existsSync(UPLOAD_DIR)) {
 
 const ALLOWED_MIME_TYPES = ["image/jpeg", "image/png", "image/webp"];
 
-const MAX_FILE_SIZE_BYTES = 5 * 1024 * 1024; // 5MB
+const MAX_FILE_SIZE_BYTES = 5 * 1024 * 1024; 
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
