@@ -7,6 +7,7 @@ const authRoutes = require("./routes/auth.routes");
 const reportRoutes = require("./routes/report.routes");
 const adminRoutes = require("./routes/admin.routes");
 const publicRoutes = require("./routes/public.routes");
+const contactRoutes = require("./routes/contact.routes");
 
 const errorHandler = require("./middleware/error.middleware");
 
@@ -36,6 +37,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/reports", reportRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/public", publicRoutes);
+app.use("/api/contact", contactRoutes);
 
 app.use(errorHandler);
 
