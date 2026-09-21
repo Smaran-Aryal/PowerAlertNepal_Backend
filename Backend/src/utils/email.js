@@ -34,4 +34,22 @@ async function sendOtpEmail({ to, otp, purpose }) {
   });
 }
 
-module.exports = { sendOtpEmail };
+async function sendContactEmail({ name, email, message }) {
+  await transporter.sendMail({
+    from: `"PowerAlert Nepal Contact Form" <${process.env.GMAIL_USER}>`,
+    to: process.env.GMAIL_USER, 
+    replyTo: email, 
+    subject: `New contact form message from ${name}`,
+    html: `
+      <div style="font-family: sans-serif; max-width: 480px; margin: auto;">
+        <h2>New message from PowerAlert Nepal contact form</h2>
+        <p><strong>Name:</strong> ${name}</p>
+        <p><strong>Email:</strong> ${email}</p>
+        <p><strong>Message:</strong></p>
+        <p style="white-space: pre-wrap;">${message}</p>
+      </div>
+    `,
+  });
+}
+
+module.exports = { sendOtpEmail, sendContactEmail };
