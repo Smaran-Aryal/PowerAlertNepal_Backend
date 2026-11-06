@@ -3,6 +3,7 @@ const authController = require("../controllers/auth.controller");
 const { otpRequestLimiter, loginLimiter } = require("../middleware/rateLimit.middleware");
 const validate = require("../middleware/validate.middleware");
 const authenticate = require("../middleware/auth.middleware");
+const requireAllowedOrigin = require("../middleware/sameOrigin.middleware");
 const {
     registerValidationRules,
     loginValidationRules,
@@ -16,7 +17,8 @@ router.post("/login", loginLimiter, validate(loginValidationRules), authControll
 router.post("/verify-email", authController.verifyEmail);
 router.post("/resend-verification-otp", otpRequestLimiter, authController.resendVerificationOtp);
 router.post("/google", authController.googleLogin);
-router.post("/refresh", validate(refreshTokenValidationRules), authController.refresh);
+router.post("/refresh", requireAllowedOrigin, validate(refreshTokenValidationRules), authController.refresh);
+
 
 router.post("/forgot-password", otpRequestLimiter, authController.forgotPassword);
 router.post("/verify-reset-otp", authController.verifyResetOtp);
