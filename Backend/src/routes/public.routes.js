@@ -16,7 +16,7 @@ const publishedOnly = (req, res, next) => {
   next();
 };
 
-// ---------- Reports (public browse/search) ----------
+// ---------- Reports ----------
 router.get("/reports", publicReportsOnly, reportController.getReports);
 router.get("/reports/:id", reportController.getReportById);
 
