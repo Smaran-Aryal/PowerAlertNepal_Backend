@@ -19,7 +19,7 @@ const checkReportOwnership = async (req, res, next) => {
     if (!isOwner && !isAdmin) {
       return res.status(403).json({
         success: false,
-        message: "You are not allowed to modify this report",
+        message: "No modification allowed",
       });
     }
 
